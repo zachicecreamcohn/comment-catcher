@@ -24,3 +24,5 @@ jobs:
           anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
           base-branch: main  # Optional, defaults to 'main'
           depth: 3  # Optional, defaults to 3
+          # anthropic-base-url: https://your-proxy.com  # Optional, for custom Anthropic endpoints
+          # github-api-url: https://github.company.com/api/v3  # Optional, for GitHub Enterprise

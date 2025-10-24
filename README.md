@@ -265,11 +265,12 @@ jobs:
 | `anthropic-api-key` | Anthropic API key for Claude AI | Yes | - |
 | `base-branch` | Base branch to compare against | No | `main` |
 | `depth` | Dependency graph depth to traverse | No | `3` |
+| `anthropic-base-url` | Anthropic API base URL (for custom endpoints) | No | `https://api.anthropic.com` |
 | `github-api-url` | GitHub API URL (for GitHub Enterprise) | No | `https://api.github.com` |
 
-### GitHub Enterprise Support
+### Custom Endpoints
 
-If you're using GitHub Enterprise, specify your API endpoint:
+If you're using GitHub Enterprise or a custom Anthropic endpoint:
 
 ```yaml
 - name: Run Comment Catcher
@@ -277,7 +278,8 @@ If you're using GitHub Enterprise, specify your API endpoint:
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
-    github-api-url: https://github.your-company.com/api/v3
+    anthropic-base-url: https://your-anthropic-proxy.com  # Optional
+    github-api-url: https://github.your-company.com/api/v3  # Optional
 ```
 
 ### Behavior
@@ -285,6 +287,23 @@ If you're using GitHub Enterprise, specify your API endpoint:
 - ✅ **Always comments** - Posts feedback even when no issues found
 - 🔄 **Updates existing comment** - Keeps PR clean by updating the same comment
 - ℹ️ **Informational only** - Never fails the check, only provides suggestions
+
+### Advanced Configuration
+
+To customize the analysis behavior (file patterns, comment filters, Claude model, etc.), create a `comment-catcher.config.json` file in your repository root. The action will automatically detect and use it.
+
+See the [Configuration](#configuration-optional) section above for all available options.
+
+**Example:** To exclude additional directories or change the Claude model, add this to your repo:
+
+```json
+{
+  "excludePatterns": ["generated", "vendor"],
+  "llmOptions": {
+    "model": "claude-3-5-sonnet-20241022"
+  }
+}
+```
 
 ## Memory Optimization
 

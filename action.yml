@@ -20,6 +20,10 @@ inputs:
   anthropic-api-key:
     description: 'Anthropic API key for Claude AI'
     required: true
+  anthropic-base-url:
+    description: 'Anthropic API base URL (for custom endpoints)'
+    required: false
+    default: 'https://api.anthropic.com'
   github-api-url:
     description: 'GitHub API URL (for GitHub Enterprise)'
     required: false
@@ -42,6 +46,7 @@ runs:
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
         ANTHROPIC_API_KEY: ${{ inputs.anthropic-api-key }}
+        ANTHROPIC_BASE_URL: ${{ inputs.anthropic-base-url }}
         BASE_BRANCH: ${{ inputs.base-branch }}
         DEPTH: ${{ inputs.depth }}
         GITHUB_API_URL: ${{ inputs.github-api-url }}
