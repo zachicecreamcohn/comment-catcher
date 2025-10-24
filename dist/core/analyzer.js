@@ -5,8 +5,7 @@ import { loadConfig } from './config.js';
  */
 export async function analyzeComments(comments, diff) {
     const config = await loadConfig();
-    // Get API key from configured env var or default
-    const apiKeyEnvVar = config.llmOptions?.apiKeyEnvVar || 'ANTHROPIC_API_KEY';
+    const apiKeyEnvVar = 'ANTHROPIC_API_KEY';
     const apiKey = process.env[apiKeyEnvVar];
     if (!apiKey) {
         throw new Error(`${apiKeyEnvVar} environment variable is required`);
@@ -14,8 +13,8 @@ export async function analyzeComments(comments, diff) {
     if (comments.length === 0) {
         return [];
     }
-    // Get base URL from configured env var, config value, or default
-    const baseURLEnvVar = config.llmOptions?.baseURLEnvVar || 'ANTHROPIC_BASE_URL';
+    // Get base URL from env var, config value, or default
+    const baseURLEnvVar = 'ANTHROPIC_BASE_URL';
     const baseURL = process.env[baseURLEnvVar] || config.llmOptions?.baseURL || 'https://api.anthropic.com';
     const anthropic = new Anthropic({
         apiKey,
@@ -73,7 +72,7 @@ async function consolidateReasons(anthropic, duplicates, config) {
         .filter(d => d.suggestion)
         .map((d, i) => `${i + 1}. ${d.suggestion}`)
         .join('\n\n');
-    const prompt = `You have multiple analyses of why the same comment is outdated. 
+    const prompt = `You have multiple analyses of why the same comment is outdated.
 Please consolidate these into the top 2 most important and distinct reasons.
 
 Comment: "${comment.text}"
@@ -84,7 +83,7 @@ ${reasons}
 
 ${suggestions ? `Multiple suggestions given:\n${suggestions}\n` : ''}
 
-Task: 
+Task:
 1. Identify the top 2 most important and distinct reasons why this comment is outdated
 2. Combine any overlapping reasons into a single clear reason
 3. Provide one consolidated suggestion for how to update the comment

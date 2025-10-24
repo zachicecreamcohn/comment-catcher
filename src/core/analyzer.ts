@@ -16,11 +16,10 @@ export async function analyzeComments(
   diff: string
 ): Promise<OutdatedComment[]> {
   const config = await loadConfig();
-  
-  // Get API key from configured env var or default
-  const apiKeyEnvVar = config.llmOptions?.apiKeyEnvVar || 'ANTHROPIC_API_KEY';
+
+  const apiKeyEnvVar = 'ANTHROPIC_API_KEY';
   const apiKey = process.env[apiKeyEnvVar];
-  
+
   if (!apiKey) {
     throw new Error(`${apiKeyEnvVar} environment variable is required`);
   }
@@ -29,8 +28,8 @@ export async function analyzeComments(
     return [];
   }
 
-  // Get base URL from configured env var, config value, or default
-  const baseURLEnvVar = config.llmOptions?.baseURLEnvVar || 'ANTHROPIC_BASE_URL';
+  // Get base URL from env var, config value, or default
+  const baseURLEnvVar = 'ANTHROPIC_BASE_URL';
   const baseURL = process.env[baseURLEnvVar] || config.llmOptions?.baseURL || 'https://api.anthropic.com';
 
   const anthropic = new Anthropic({
@@ -46,11 +45,11 @@ export async function analyzeComments(
   for (let i = 0; i < comments.length; i += BATCH_SIZE) {
     const batchNum = Math.floor(i / BATCH_SIZE) + 1;
     const batch = comments.slice(i, i + BATCH_SIZE);
-    
+
     if (totalBatches > 1) {
       console.log(`   Processing batch ${batchNum}/${totalBatches} (${batch.length} comments)...`);
     }
-    
+
     const batchResults = await analyzeCommentBatch(anthropic, batch, diff, config);
     allOutdatedComments.push(...batchResults);
   }
@@ -60,7 +59,7 @@ export async function analyzeComments(
     console.log('   Deduplicating results...');
   }
   const deduplicated = await deduplicateComments(anthropic, allOutdatedComments, config);
-  
+
   return deduplicated;
 }
 
@@ -71,7 +70,7 @@ async function deduplicateComments(
 ): Promise<OutdatedComment[]> {
   // Group by file + line
   const grouped = new Map<string, OutdatedComment[]>();
-  
+
   for (const comment of comments) {
     const key = `${comment.comment.file}:${comment.comment.line}`;
     if (!grouped.has(key)) {
@@ -109,7 +108,7 @@ async function consolidateReasons(
     .map((d, i) => `${i + 1}. ${d.suggestion}`)
     .join('\n\n');
 
-  const prompt = `You have multiple analyses of why the same comment is outdated. 
+  const prompt = `You have multiple analyses of why the same comment is outdated.
 Please consolidate these into the top 2 most important and distinct reasons.
 
 Comment: "${comment.text}"
@@ -120,7 +119,7 @@ ${reasons}
 
 ${suggestions ? `Multiple suggestions given:\n${suggestions}\n` : ''}
 
-Task: 
+Task:
 1. Identify the top 2 most important and distinct reasons why this comment is outdated
 2. Combine any overlapping reasons into a single clear reason
 3. Provide one consolidated suggestion for how to update the comment

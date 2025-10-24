@@ -13,8 +13,6 @@ export interface CommentCatcherConfig {
     llmOptions?: {
         model?: string;
         baseURL?: string;
-        apiKeyEnvVar?: string;
-        baseURLEnvVar?: string;
     };
 }
 export declare function loadConfig(): Promise<CommentCatcherConfig>;

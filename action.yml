@@ -24,10 +24,6 @@ inputs:
     description: 'Anthropic API base URL (for custom endpoints)'
     required: false
     default: 'https://api.anthropic.com'
-  github-api-url:
-    description: 'GitHub API URL (for GitHub Enterprise)'
-    required: false
-    default: 'https://api.github.com'
 
 runs:
   using: 'composite'
@@ -49,6 +45,5 @@ runs:
         ANTHROPIC_BASE_URL: ${{ inputs.anthropic-base-url }}
         BASE_BRANCH: ${{ inputs.base-branch }}
         DEPTH: ${{ inputs.depth }}
-        GITHUB_API_URL: ${{ inputs.github-api-url }}
       run: |
         node ${{ github.action_path }}/scripts/run-and-comment.js

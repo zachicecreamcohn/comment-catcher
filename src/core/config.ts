@@ -26,8 +26,6 @@ export interface CommentCatcherConfig {
   llmOptions?: {
     model?: string;
     baseURL?: string;
-    apiKeyEnvVar?: string;  // Name of environment variable containing API key
-    baseURLEnvVar?: string; // Name of environment variable containing base URL
   };
 }
 
@@ -55,7 +53,7 @@ export async function loadConfig(): Promise<CommentCatcherConfig> {
   for (const configPath of configPaths) {
     if (existsSync(configPath)) {
       console.log(`📋 Loading config from ${configPath}`);
-      
+
       let loadedConfig: CommentCatcherConfig;
       if (configPath.endsWith('.js')) {
         // Dynamic import for JS config

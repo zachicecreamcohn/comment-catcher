@@ -11,7 +11,6 @@
   },
   "llmOptions": {
     "model": "claude-3-5-sonnet-20241022",
-    "apiKeyEnvVar": "ANTHROPIC_API_KEY",
-    "baseURLEnvVar": "ANTHROPIC_BASE_URL"
+    "baseURL": "https://api.anthropic.com"
   }
 }

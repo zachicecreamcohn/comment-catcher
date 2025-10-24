@@ -170,9 +170,7 @@ To customize behavior, create a config file in one of these locations:
   },
   "llmOptions": {
     "model": "claude-3-5-sonnet-20241022",      // Claude model to use
-    "baseURL": "https://api.anthropic.com",      // Custom API endpoint
-    "apiKeyEnvVar": "ANTHROPIC_API_KEY",         // Env var name for API key
-    "baseURLEnvVar": "ANTHROPIC_BASE_URL"       // Env var name for base URL
+    "baseURL": "https://api.anthropic.com",      // Custom API endpoint. Optional. You can also set ANTHROPIC_BASE_URL
   }
 }
 ```
@@ -266,11 +264,10 @@ jobs:
 | `base-branch` | Base branch to compare against | No | `main` |
 | `depth` | Dependency graph depth to traverse | No | `3` |
 | `anthropic-base-url` | Anthropic API base URL (for custom endpoints) | No | `https://api.anthropic.com` |
-| `github-api-url` | GitHub API URL (for GitHub Enterprise) | No | `https://api.github.com` |
 
-### Custom Endpoints
+### Custom Anthropic Endpoint
 
-If you're using GitHub Enterprise or a custom Anthropic endpoint:
+If you're using a custom Anthropic endpoint (e.g., a proxy):
 
 ```yaml
 - name: Run Comment Catcher
@@ -278,8 +275,7 @@ If you're using GitHub Enterprise or a custom Anthropic endpoint:
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
-    anthropic-base-url: https://your-anthropic-proxy.com  # Optional
-    github-api-url: https://github.your-company.com/api/v3  # Optional
+    anthropic-base-url: https://your-anthropic-proxy.com
 ```
 
 ### Behavior
