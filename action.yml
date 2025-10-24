@@ -20,6 +20,10 @@ inputs:
   anthropic-api-key:
     description: 'Anthropic API key for Claude AI'
     required: true
+  github-api-url:
+    description: 'GitHub API URL (for GitHub Enterprise)'
+    required: false
+    default: 'https://api.github.com'
 
 runs:
   using: 'composite'
@@ -28,11 +32,11 @@ runs:
       uses: actions/setup-node@v4
       with:
         node-version: '18'
-    
+
     - name: Install comment-catcher
       shell: bash
       run: npm install -g comment-catcher
-    
+
     - name: Run comment-catcher and post results
       shell: bash
       env:
@@ -40,5 +44,6 @@ runs:
         ANTHROPIC_API_KEY: ${{ inputs.anthropic-api-key }}
         BASE_BRANCH: ${{ inputs.base-branch }}
         DEPTH: ${{ inputs.depth }}
+        GITHUB_API_URL: ${{ inputs.github-api-url }}
       run: |
         node ${{ github.action_path }}/scripts/run-and-comment.js

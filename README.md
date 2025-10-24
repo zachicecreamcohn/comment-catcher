@@ -265,6 +265,20 @@ jobs:
 | `anthropic-api-key` | Anthropic API key for Claude AI | Yes | - |
 | `base-branch` | Base branch to compare against | No | `main` |
 | `depth` | Dependency graph depth to traverse | No | `3` |
+| `github-api-url` | GitHub API URL (for GitHub Enterprise) | No | `https://api.github.com` |
+
+### GitHub Enterprise Support
+
+If you're using GitHub Enterprise, specify your API endpoint:
+
+```yaml
+- name: Run Comment Catcher
+  uses: zachicecreamcohn/comment-catcher@v1
+  with:
+    github-token: ${{ secrets.GITHUB_TOKEN }}
+    anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+    github-api-url: https://github.your-company.com/api/v3
+```
 
 ### Behavior
 

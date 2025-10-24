@@ -70,10 +70,13 @@ async function postComment() {
   const commentMarker = '<!-- comment-catcher-bot -->';
   const fullCommentBody = `${commentMarker}\n${commentBody}`;
 
+  // Support GitHub Enterprise with custom API endpoint
+  const apiBaseUrl = process.env.GITHUB_API_URL || 'https://api.github.com';
+
   try {
     // Check for existing comment
     const commentsResponse = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/issues/${prNumber}/comments`,
+      `${apiBaseUrl}/repos/${owner}/${repo}/issues/${prNumber}/comments`,
       {
         headers: {
           'Authorization': `Bearer ${GITHUB_TOKEN}`,
@@ -96,7 +99,7 @@ async function postComment() {
       // Update existing comment
       console.log(`Updating existing comment #${existingComment.id}`);
       const updateResponse = await fetch(
-        `https://api.github.com/repos/${owner}/${repo}/issues/comments/${existingComment.id}`,
+        `${apiBaseUrl}/repos/${owner}/${repo}/issues/comments/${existingComment.id}`,
         {
           method: 'PATCH',
           headers: {
@@ -117,7 +120,7 @@ async function postComment() {
       // Create new comment
       console.log('Creating new PR comment');
       const createResponse = await fetch(
-        `https://api.github.com/repos/${owner}/${repo}/issues/${prNumber}/comments`,
+        `${apiBaseUrl}/repos/${owner}/${repo}/issues/${prNumber}/comments`,
         {
           method: 'POST',
           headers: {
