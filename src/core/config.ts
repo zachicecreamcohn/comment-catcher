@@ -40,7 +40,12 @@ const defaultConfig: CommentCatcherConfig = {
   },
 };
 
+let cachedConfig: CommentCatcherConfig | null = null;
+
 export async function loadConfig(): Promise<CommentCatcherConfig> {
+  if (cachedConfig !== null) {
+    return cachedConfig;
+  }
   const configPaths = [
     'comment-catcher.config.json',
     '.comment-catcher.json',
@@ -51,17 +56,21 @@ export async function loadConfig(): Promise<CommentCatcherConfig> {
     if (existsSync(configPath)) {
       console.log(`📋 Loading config from ${configPath}`);
       
+      let loadedConfig: CommentCatcherConfig;
       if (configPath.endsWith('.js')) {
         // Dynamic import for JS config
         const module = await import(join(process.cwd(), configPath));
-        return module.default || module;
+        loadedConfig = module.default || module;
       } else {
         const configContent = readFileSync(configPath, 'utf-8');
         const userConfig = JSON.parse(configContent);
-        return { ...defaultConfig, ...userConfig };
+        loadedConfig = { ...defaultConfig, ...userConfig };
       }
+      cachedConfig = loadedConfig;
+      return loadedConfig;
     }
   }
 
+  cachedConfig = defaultConfig;
   return defaultConfig;
 }
