@@ -43,7 +43,7 @@ npm install -g comment-catcher
 ### From Source
 
 ```bash
-git clone https://github.com/yourusername/comment-catcher.git
+git clone https://github.com/zachicecreamcohn/comment-catcher.git
 cd comment-catcher
 npm install
 npm run build
@@ -207,6 +207,70 @@ npm run dev
 - `1`: Outdated comments found or error occurred
 
 This makes it suitable for use in CI/CD pipelines.
+
+## GitHub Actions Integration
+
+Comment Catcher can automatically check PRs and post feedback as comments.
+
+### Setup
+
+1. **Add the workflow file** to your repository at `.github/workflows/comment-catcher.yml`:
+
+```yaml
+name: Comment Catcher
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  check-comments:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch full history for git diff
+
+      - name: Run Comment Catcher
+        uses: zachicecreamcohn/comment-catcher@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+          base-branch: main  # Optional, defaults to 'main'
+          depth: 3  # Optional, defaults to 3
+```
+
+2. **Add your Anthropic API key** as a repository secret:
+   - Go to your repository Settings → Secrets and variables → Actions
+   - Click "New repository secret"
+   - Name: `ANTHROPIC_API_KEY`
+   - Value: Your Anthropic API key
+
+3. **That's it!** The action will now:
+   - Run on every PR (opened, updated, or reopened)
+   - Analyze comments for outdated documentation
+   - Post or update a comment on the PR with results
+   - Always provide feedback (even if no issues found)
+
+### Action Inputs
+
+| Input | Description | Required | Default |
+|-------|-------------|----------|---------|
+| `github-token` | GitHub token for posting PR comments | Yes | - |
+| `anthropic-api-key` | Anthropic API key for Claude AI | Yes | - |
+| `base-branch` | Base branch to compare against | No | `main` |
+| `depth` | Dependency graph depth to traverse | No | `3` |
+
+### Behavior
+
+- ✅ **Always comments** - Posts feedback even when no issues found
+- 🔄 **Updates existing comment** - Keeps PR clean by updating the same comment
+- ℹ️ **Informational only** - Never fails the check, only provides suggestions
 
 ## Memory Optimization
 

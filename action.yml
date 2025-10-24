@@ -1,0 +1,44 @@
+name: 'Comment Catcher'
+description: 'Detects outdated code comments in TypeScript/JavaScript projects using AI analysis'
+author: 'zachicecreamcohn'
+branding:
+  icon: 'message-circle'
+  color: 'blue'
+
+inputs:
+  github-token:
+    description: 'GitHub token for posting PR comments'
+    required: true
+  base-branch:
+    description: 'Base branch to compare against'
+    required: false
+    default: 'main'
+  depth:
+    description: 'Dependency graph depth to traverse'
+    required: false
+    default: '3'
+  anthropic-api-key:
+    description: 'Anthropic API key for Claude AI'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+    
+    - name: Install comment-catcher
+      shell: bash
+      run: npm install -g comment-catcher
+    
+    - name: Run comment-catcher and post results
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        ANTHROPIC_API_KEY: ${{ inputs.anthropic-api-key }}
+        BASE_BRANCH: ${{ inputs.base-branch }}
+        DEPTH: ${{ inputs.depth }}
+      run: |
+        node ${{ github.action_path }}/scripts/run-and-comment.js
