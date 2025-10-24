@@ -55,7 +55,121 @@ export async function analyzeComments(
     allOutdatedComments.push(...batchResults);
   }
 
-  return allOutdatedComments;
+  // Deduplicate and consolidate multiple entries for the same comment
+  if (allOutdatedComments.length > 0) {
+    console.log('   Deduplicating results...');
+  }
+  const deduplicated = await deduplicateComments(anthropic, allOutdatedComments, config);
+  
+  return deduplicated;
+}
+
+async function deduplicateComments(
+  anthropic: Anthropic,
+  comments: OutdatedComment[],
+  config: any
+): Promise<OutdatedComment[]> {
+  // Group by file + line
+  const grouped = new Map<string, OutdatedComment[]>();
+  
+  for (const comment of comments) {
+    const key = `${comment.comment.file}:${comment.comment.line}`;
+    if (!grouped.has(key)) {
+      grouped.set(key, []);
+    }
+    grouped.get(key)!.push(comment);
+  }
+
+  const deduplicated: OutdatedComment[] = [];
+
+  for (const [key, duplicates] of grouped.entries()) {
+    if (duplicates.length === 1) {
+      // No duplicates, keep as is
+      deduplicated.push(duplicates[0]);
+    } else {
+      // Multiple entries for same comment - ask AI to consolidate
+      console.log(`   Consolidating ${duplicates.length} entries for ${key}...`);
+      const consolidated = await consolidateReasons(anthropic, duplicates, config);
+      deduplicated.push(consolidated);
+    }
+  }
+
+  return deduplicated;
+}
+
+async function consolidateReasons(
+  anthropic: Anthropic,
+  duplicates: OutdatedComment[],
+  config: any
+): Promise<OutdatedComment> {
+  const comment = duplicates[0].comment;
+  const reasons = duplicates.map((d, i) => `${i + 1}. ${d.reason}`).join('\n\n');
+  const suggestions = duplicates
+    .filter(d => d.suggestion)
+    .map((d, i) => `${i + 1}. ${d.suggestion}`)
+    .join('\n\n');
+
+  const prompt = `You have multiple analyses of why the same comment is outdated. 
+Please consolidate these into the top 2 most important and distinct reasons.
+
+Comment: "${comment.text}"
+File: ${comment.file}:${comment.line}
+
+Multiple reasons given:
+${reasons}
+
+${suggestions ? `Multiple suggestions given:\n${suggestions}\n` : ''}
+
+Task: 
+1. Identify the top 2 most important and distinct reasons why this comment is outdated
+2. Combine any overlapping reasons into a single clear reason
+3. Provide one consolidated suggestion for how to update the comment
+
+Return your analysis as a consolidated reason and suggestion.`;
+
+  const response = await anthropic.messages.create({
+    model: config.llmOptions?.model || 'claude-3-5-sonnet-20241022',
+    max_tokens: 1024,
+    tools: [
+      {
+        name: 'consolidate_comment_analysis',
+        description: 'Provide consolidated analysis of why a comment is outdated',
+        input_schema: {
+          type: 'object',
+          properties: {
+            consolidated_reason: {
+              type: 'string',
+              description: 'The top 2 most important reasons, combined into a clear explanation',
+            },
+            consolidated_suggestion: {
+              type: 'string',
+              description: 'A single, clear suggestion for updating the comment',
+            },
+          },
+          required: ['consolidated_reason', 'consolidated_suggestion'],
+        },
+      },
+    ],
+    tool_choice: { type: 'tool', name: 'consolidate_comment_analysis' },
+    messages: [{ role: 'user', content: prompt }],
+  });
+
+  const toolUse = response.content.find((block) => block.type === 'tool_use');
+  if (!toolUse || toolUse.type !== 'tool_use') {
+    // Fallback to first entry if consolidation fails
+    return duplicates[0];
+  }
+
+  const result = toolUse.input as {
+    consolidated_reason: string;
+    consolidated_suggestion: string;
+  };
+
+  return {
+    comment,
+    reason: result.consolidated_reason,
+    suggestion: result.consolidated_suggestion,
+  };
 }
 
 async function analyzeCommentBatch(
