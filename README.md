@@ -4,11 +4,10 @@ A CLI tool that detects outdated code comments in TypeScript/JavaScript projects
 
 ## Features
 
-- 🔍 Analyzes git diffs to find code changes
-- 🔗 Uses dependency graphs to find affected files beyond direct changes
-- 💬 Extracts code comments using AST parsing
-- 🤖 Uses Claude AI to intelligently identify outdated comments
-- 📊 Generates markdown or JSON reports
+- Analyzes git diffs to find code changes
+- Uses dependency graphs to find affected files beyond direct changes
+- Extracts code comments using AST parsing
+- Uses Claude AI to intelligently identify outdated comments
 
 ## Installation
 
@@ -198,11 +197,6 @@ npm run build
 # Watch mode
 npm run dev
 ```
-
-## Exit Codes
-
-- `0`: No outdated comments found
-- `1`: Outdated comments found or error occurred
 
 This makes it suitable for use in CI/CD pipelines.
 
