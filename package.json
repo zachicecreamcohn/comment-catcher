@@ -7,16 +7,34 @@
   "bin": {
     "comment-catcher": "dist/cli.js"
   },
+  "files": [
+    "dist",
+    "action.yml",
+    "scripts"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "start": "node dist/cli.js"
+    "start": "node dist/cli.js",
+    "prepublishOnly": "npm run build"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zachicecreamcohn/comment-catcher.git"
+  },
+  "bugs": {
+    "url": "https://github.com/zachicecreamcohn/comment-catcher/issues"
+  },
+  "homepage": "https://github.com/zachicecreamcohn/comment-catcher#readme",
   "keywords": [
     "cli",
     "comments",
     "pr",
-    "github"
+    "github",
+    "github-actions",
+    "code-review",
+    "documentation",
+    "typescript"
   ],
   "author": "",
   "license": "MIT",

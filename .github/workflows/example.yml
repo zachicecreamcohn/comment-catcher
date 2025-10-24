@@ -1,0 +1,26 @@
+name: Comment Catcher
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  check-comments:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch full history for git diff
+      
+      - name: Run Comment Catcher
+        uses: ./  # For testing in this repo, users would use: yourusername/comment-catcher@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+          base-branch: main  # Optional, defaults to 'main'
+          depth: 3  # Optional, defaults to 3
