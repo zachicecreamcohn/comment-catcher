@@ -3,7 +3,10 @@ import { loadConfig } from './config.js';
 import * as path from 'path';
 
 /**
- * Finds files that depend on the changed files using dependency-cruiser.
+ * Finds files related to the changed files using dependency-cruiser.
+ * This includes both:
+ * - Files that depend on (import) the changed files (dependents)
+ * - Files that the changed files depend on (dependencies)
  * 
  * Key optimization: Instead of scanning the entire codebase, we only scan
  * the changed files and let dependency-cruiser traverse outward from there.
@@ -64,25 +67,38 @@ export async function getDependents(
       throw new Error('Unexpected string output from dependency-cruiser');
     }
 
-    const dependents = new Set<string>();
+    const relatedFiles = new Set<string>();
     const changedSet = new Set(changedFiles.map(normalizeFilePath));
 
-    // Build a reverse dependency map (file -> files that import it)
+    // Build two maps:
+    // 1. Reverse dependency map (file -> files that import it) - for finding dependents
+    // 2. Forward dependency map (file -> files it imports) - for finding dependencies
+    const dependentMap = new Map<string, Set<string>>();
     const dependencyMap = new Map<string, Set<string>>();
 
     for (const module of result.output.modules) {
+      const source = normalizeFilePath(module.source);
+      
       for (const dep of module.dependencies) {
         const resolvedPath = normalizeFilePath(dep.resolved);
-        if (!dependencyMap.has(resolvedPath)) {
-          dependencyMap.set(resolvedPath, new Set());
+        
+        // Reverse map: resolvedPath is imported by source
+        if (!dependentMap.has(resolvedPath)) {
+          dependentMap.set(resolvedPath, new Set());
         }
-        dependencyMap.get(resolvedPath)!.add(normalizeFilePath(module.source));
+        dependentMap.get(resolvedPath)!.add(source);
+        
+        // Forward map: source imports resolvedPath
+        if (!dependencyMap.has(source)) {
+          dependencyMap.set(source, new Set());
+        }
+        dependencyMap.get(source)!.add(resolvedPath);
       }
     }
 
-    console.log(`   Built dependency map with ${dependencyMap.size} entries`);
+    console.log(`   Built dependency maps with ${dependentMap.size} entries`);
 
-    // BFS to find all dependents up to specified depth
+    // BFS to find all related files (both dependents and dependencies) up to specified depth
     const queue: Array<{ file: string; currentDepth: number }> =
       Array.from(changedSet).map(file => ({ file, currentDepth: 0 }));
     const visited = new Set<string>();
@@ -96,18 +112,30 @@ export async function getDependents(
 
       visited.add(file);
 
-      const fileDependents = dependencyMap.get(file);
+      // Find files that import this file (dependents - traverse upward)
+      const fileDependents = dependentMap.get(file);
       if (fileDependents) {
         for (const dependent of fileDependents) {
           if (!changedSet.has(dependent)) {
-            dependents.add(dependent);
+            relatedFiles.add(dependent);
             queue.push({ file: dependent, currentDepth: currentDepth + 1 });
+          }
+        }
+      }
+
+      // Find files that this file imports (dependencies - traverse downward)
+      const fileDependencies = dependencyMap.get(file);
+      if (fileDependencies) {
+        for (const dependency of fileDependencies) {
+          if (!changedSet.has(dependency)) {
+            relatedFiles.add(dependency);
+            queue.push({ file: dependency, currentDepth: currentDepth + 1 });
           }
         }
       }
     }
 
-    return Array.from(dependents);
+    return Array.from(relatedFiles);
   } catch (error) {
     console.warn('Failed to generate dependency graph:', error);
     return [];

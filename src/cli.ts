@@ -46,19 +46,19 @@ program
         return;
       }
 
-      // Step 2: Get dependents (if enabled)
-      let dependents: string[] = [];
+      // Step 2: Get related files (dependents + dependencies, if enabled)
+      let relatedFiles: string[] = [];
       if (options.deps !== false) {
-        console.log(`🔗 Finding dependent files (depth: ${options.depth})...`);
+        console.log(`🔗 Finding related files (depth: ${options.depth})...`);
         console.log(`   Scanning from changed files only (not entire codebase)`);
-        dependents = await getDependents(changedFiles, parseInt(options.depth));
-        console.log(`   Found ${dependents.length} dependent file(s)\n`);
+        relatedFiles = await getDependents(changedFiles, parseInt(options.depth));
+        console.log(`   Found ${relatedFiles.length} related file(s) (dependents + dependencies)\n`);
       } else {
         console.log('⏭️  Skipping dependency analysis (--no-deps flag)\n');
       }
 
-      // Step 3: Extract comments from changed files and dependents
-      const allFiles = [...changedFiles, ...dependents];
+      // Step 3: Extract comments from changed files and related files
+      const allFiles = [...changedFiles, ...relatedFiles];
       console.log(`💬 Extracting comments from ${allFiles.length} file(s)...`);
       const comments = await extractComments(allFiles);
       console.log(`   Found ${comments.length} comment(s)\n`);

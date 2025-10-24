@@ -182,9 +182,11 @@ See `comment-catcher.config.example.json` for a complete example.
 ## How It Works
 
 1. **Git Diff**: Identifies files changed compared to the base branch
-2. **Dependency Graph**: Uses dependency-cruiser to find files that depend on changed files
+2. **Dependency Graph**: Uses dependency-cruiser to find related files
    - **Performance optimized**: Scans only the changed files as entry points, not the entire codebase
-   - Traverses outward to find dependent files up to the specified depth
+   - Traverses in both directions up to the specified depth:
+     - **Upward**: Files that import the changed files (dependents)
+     - **Downward**: Files that the changed files import (dependencies)
 3. **Comment Extraction**: Parses TypeScript/JavaScript files to extract all comments
 4. **AI Analysis**: Claude analyzes comments against the diff to identify outdated ones
 5. **Report**: Generates a report with reasons and suggestions for updating
@@ -211,7 +213,9 @@ This makes it suitable for use in CI/CD pipelines.
 Comment Catcher is designed to work efficiently with large codebases by using a targeted scanning approach:
 
 - **Only scans changed files as entry points** - Instead of scanning your entire codebase (which could be 10,000+ files), dependency-cruiser only scans the files you actually changed
-- **Traverses outward from there** - From those changed files, it finds their dependents up to the depth you specify (default: 3 levels)
+- **Traverses in both directions from there** - From those changed files, it finds related files up to the depth you specify (default: 3 levels):
+  - Files that import the changed files (dependents)
+  - Files that the changed files import (dependencies)
 - **Low memory cache** - Uses a 100ms cache duration to minimize memory usage
 
-This means if you changed 5 files in a 10,000 file codebase, it will only scan those 5 files plus their dependents, not all 10,000 files.
+This means if you changed 5 files in a 10,000 file codebase, it will only scan those 5 files plus their related files, not all 10,000 files.
