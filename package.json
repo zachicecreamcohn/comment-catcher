@@ -1,0 +1,32 @@
+{
+  "name": "comment-catcher",
+  "version": "0.1.0",
+  "description": "CLI tool to detect outdated code comments in PRs",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "comment-catcher": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/cli.js"
+  },
+  "keywords": [
+    "cli",
+    "comments",
+    "pr",
+    "github"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.67.0",
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "dependency-cruiser": "^17.1.0",
+    "typescript": "^5.9.3"
+  }
+}

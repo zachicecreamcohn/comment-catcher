@@ -1,0 +1,17 @@
+{
+  "excludePatterns": ["node_modules", "dist", "build", ".git", "coverage"],
+  "extensions": [".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs"],
+  "dependencyOptions": {
+    "tsConfig": "./tsconfig.json",
+    "webpackConfig": "./webpack.config.js"
+  },
+  "commentFilters": {
+    "minLength": 10,
+    "ignorePatterns": ["TODO:", "FIXME:", "NOTE:", "HACK:", "@ts-", "eslint-", "prettier-"]
+  },
+  "llmOptions": {
+    "model": "claude-3-5-sonnet-20241022",
+    "apiKeyEnvVar": "ANTHROPIC_API_KEY",
+    "baseURLEnvVar": "ANTHROPIC_BASE_URL"
+  }
+}
