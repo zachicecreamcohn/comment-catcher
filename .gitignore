@@ -4,3 +4,5 @@ node_modules/
 .DS_Store
 comment-catcher-report.md
 comment-catcher-report.json
+plans/
+plans_backup/
