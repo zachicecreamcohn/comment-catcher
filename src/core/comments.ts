@@ -43,14 +43,14 @@ async function extractCommentsFromSourceFile(
 ): Promise<CodeComment[]> {
   const comments: CodeComment[] = [];
   const lines = sourceText.split('\n');
-  const commentRanges: Array<{ range: ts.CommentRange; node: ts.Node }> = [];
+  const commentRanges: ts.CommentRange[] = [];
 
   function visit(node: ts.Node) {
     const leading = ts.getLeadingCommentRanges(sourceText, node.getFullStart()) || [];
     const trailing = ts.getTrailingCommentRanges(sourceText, node.getEnd()) || [];
     
     for (const range of [...leading, ...trailing]) {
-      commentRanges.push({ range, node });
+      commentRanges.push(range);
     }
 
     ts.forEachChild(node, visit);
@@ -58,7 +58,15 @@ async function extractCommentsFromSourceFile(
 
   visit(sourceFile);
 
-  for (const { range } of commentRanges) {
+  // Sort by position and remove duplicates
+  const uniqueRanges = Array.from(
+    new Map(commentRanges.map(r => [r.pos, r])).values()
+  ).sort((a, b) => a.pos - b.pos);
+
+  // Group consecutive single-line comments
+  const groupedRanges = groupConsecutiveComments(uniqueRanges, sourceFile);
+
+  for (const range of groupedRanges) {
     const commentText = sourceText.substring(range.pos, range.end);
     const cleanedComment = cleanComment(commentText);
 
@@ -78,6 +86,54 @@ async function extractCommentsFromSourceFile(
   }
 
   return comments;
+}
+
+function groupConsecutiveComments(
+  ranges: ts.CommentRange[],
+  sourceFile: ts.SourceFile
+): ts.CommentRange[] {
+  if (ranges.length === 0) return [];
+
+  const grouped: ts.CommentRange[] = [];
+  let currentGroup: ts.CommentRange | null = null;
+
+  for (const range of ranges) {
+    // Only group single-line comments
+    if (range.kind !== ts.SyntaxKind.SingleLineCommentTrivia) {
+      if (currentGroup) {
+        grouped.push(currentGroup);
+        currentGroup = null;
+      }
+      grouped.push(range);
+      continue;
+    }
+
+    if (!currentGroup) {
+      currentGroup = { ...range };
+      continue;
+    }
+
+    // Check if this comment is on the next line
+    const currentEndLine = sourceFile.getLineAndCharacterOfPosition(currentGroup.end).line;
+    const nextStartLine = sourceFile.getLineAndCharacterOfPosition(range.pos).line;
+
+    if (nextStartLine === currentEndLine + 1) {
+      // Merge consecutive comments
+      currentGroup.end = range.end;
+      if (range.hasTrailingNewLine) {
+        currentGroup.hasTrailingNewLine = true;
+      }
+    } else {
+      grouped.push(currentGroup);
+      currentGroup = { ...range };
+    }
+  }
+
+  if (currentGroup) {
+    grouped.push(currentGroup);
+  }
+
+  return grouped;
 }
 
 function cleanComment(comment: string): string {
