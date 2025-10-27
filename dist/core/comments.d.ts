@@ -1,6 +1,7 @@
 export interface CodeComment {
     file: string;
     line: number;
+    endLine?: number;
     text: string;
     context: string;
 }

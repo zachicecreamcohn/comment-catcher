@@ -68,27 +68,51 @@ async function deduplicateComments(
   comments: OutdatedComment[],
   config: any
 ): Promise<OutdatedComment[]> {
-  // Group by file + line
-  const grouped = new Map<string, OutdatedComment[]>();
-
-  for (const comment of comments) {
-    const key = `${comment.comment.file}:${comment.comment.line}`;
-    if (!grouped.has(key)) {
-      grouped.set(key, []);
+  // Sort by file and line number
+  const sorted = [...comments].sort((a, b) => {
+    if (a.comment.file !== b.comment.file) {
+      return a.comment.file.localeCompare(b.comment.file);
     }
-    grouped.get(key)!.push(comment);
+    return a.comment.line - b.comment.line;
+  });
+
+  const grouped: OutdatedComment[][] = [];
+  let currentGroup: OutdatedComment[] = [];
+
+  for (const comment of sorted) {
+    if (currentGroup.length === 0) {
+      currentGroup = [comment];
+      continue;
+    }
+
+    const lastComment = currentGroup[currentGroup.length - 1];
+    const lastEnd = lastComment.comment.endLine || lastComment.comment.line;
+    
+    // Same file and consecutive or overlapping lines
+    if (
+      lastComment.comment.file === comment.comment.file &&
+      comment.comment.line <= lastEnd + 1
+    ) {
+      currentGroup.push(comment);
+    } else {
+      grouped.push(currentGroup);
+      currentGroup = [comment];
+    }
+  }
+
+  if (currentGroup.length > 0) {
+    grouped.push(currentGroup);
   }
 
   const deduplicated: OutdatedComment[] = [];
 
-  for (const [key, duplicates] of grouped.entries()) {
-    if (duplicates.length === 1) {
-      // No duplicates, keep as is
-      deduplicated.push(duplicates[0]);
+  for (const group of grouped) {
+    if (group.length === 1) {
+      deduplicated.push(group[0]);
     } else {
-      // Multiple entries for same comment - ask AI to consolidate
-      console.log(`   Consolidating ${duplicates.length} entries for ${key}...`);
-      const consolidated = await consolidateReasons(anthropic, duplicates, config);
+      const key = `${group[0].comment.file}:${group[0].comment.line}`;
+      console.log(`   Consolidating ${group.length} entries for ${key}...`);
+      const consolidated = await consolidateReasons(anthropic, group, config);
       deduplicated.push(consolidated);
     }
   }

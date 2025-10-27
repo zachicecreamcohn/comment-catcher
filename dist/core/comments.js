@@ -40,11 +40,13 @@ async function extractCommentsFromSourceFile(sourceFile, filePath, sourceText) {
         if (cleanedComment.length === 0 || await isNoiseComment(cleanedComment)) {
             continue;
         }
-        const lineNumber = sourceFile.getLineAndCharacterOfPosition(range.pos).line + 1;
-        const context = getContext(lines, lineNumber - 1);
+        const startLine = sourceFile.getLineAndCharacterOfPosition(range.pos).line + 1;
+        const endLine = sourceFile.getLineAndCharacterOfPosition(range.end).line + 1;
+        const context = getContext(lines, startLine - 1);
         comments.push({
             file: filePath,
-            line: lineNumber,
+            line: startLine,
+            endLine: endLine > startLine ? endLine : undefined,
             text: cleanedComment,
             context,
         });
