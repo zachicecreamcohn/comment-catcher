@@ -47,17 +47,24 @@ try {
 
 // Run comment-catcher CLI
 console.log('Running comment-catcher...');
+console.log(`Environment check - ANTHROPIC_API_KEY present: ${!!process.env.ANTHROPIC_API_KEY}`);
 let reportPath;
 let cliError = null;
 try {
   reportPath = path.join(process.cwd(), 'comment-catcher-report.md');
+  
+  // Build the environment explicitly
+  const cliEnv = {
+    ...process.env,
+    ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+    ANTHROPIC_BASE_URL: process.env.ANTHROPIC_BASE_URL
+  };
+  
+  console.log(`CLI will receive ANTHROPIC_API_KEY: ${!!cliEnv.ANTHROPIC_API_KEY}`);
+  
   execSync(`comment-catcher check -b ${BASE_BRANCH} -d ${DEPTH} -f markdown -o ${reportPath}`, {
-    stdio: 'pipe',
-    env: {
-      ...process.env,
-      ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
-      ANTHROPIC_BASE_URL: process.env.ANTHROPIC_BASE_URL
-    }
+    stdio: 'inherit', // Changed from 'pipe' to see actual error output
+    env: cliEnv
   });
   console.log('Comment-catcher completed successfully');
 } catch (error) {
