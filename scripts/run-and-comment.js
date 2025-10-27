@@ -32,7 +32,9 @@ if (!process.env.ANTHROPIC_API_KEY) {
   console.error('❌ Error: ANTHROPIC_API_KEY environment variable is not set');
   process.exit(1);
 }
-console.log('✓ ANTHROPIC_API_KEY is set');
+const keyLength = process.env.ANTHROPIC_API_KEY.length;
+const keyPrefix = process.env.ANTHROPIC_API_KEY.substring(0, 7);
+console.log(`✓ ANTHROPIC_API_KEY is set (length: ${keyLength}, prefix: ${keyPrefix}...)`);
 
 // Ensure base branch ref is available
 console.log(`Fetching base branch: ${BASE_BRANCH}...`);
