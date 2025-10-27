@@ -40,11 +40,11 @@
   "license": "MIT",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.67.0",
-    "commander": "^12.1.0"
+    "commander": "^12.1.0",
+    "dependency-cruiser": "^17.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
-    "dependency-cruiser": "^17.1.0",
     "typescript": "^5.9.3"
   }
 }

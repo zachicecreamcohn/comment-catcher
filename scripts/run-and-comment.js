@@ -30,24 +30,48 @@ try {
 // Run comment-catcher CLI
 console.log('Running comment-catcher...');
 let reportPath;
+let cliError = null;
 try {
   reportPath = path.join(process.cwd(), 'comment-catcher-report.md');
   execSync(`comment-catcher check -b ${BASE_BRANCH} -d ${DEPTH} -f markdown -o ${reportPath}`, {
-    stdio: 'inherit',
+    stdio: 'pipe',
     env: {
       ...process.env,
       ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY
     }
   });
+  console.log('Comment-catcher completed successfully');
 } catch (error) {
-  // CLI returns non-zero when issues found, which is expected
-  console.log('Comment-catcher completed');
+  // Capture the error output for analysis
+  const errorOutput = error.stderr?.toString() || error.stdout?.toString() || error.message || '';
+  
+  // Check if this is a real error (missing dependencies, etc.) or just "issues found"
+  if (errorOutput.includes('Cannot find package') || 
+      errorOutput.includes('MODULE_NOT_FOUND') ||
+      errorOutput.includes('ANTHROPIC_API_KEY') ||
+      !fs.existsSync(reportPath)) {
+    // This is a real error, not just "issues found"
+    cliError = errorOutput;
+    console.error('Error running comment-catcher:', errorOutput);
+  } else {
+    // CLI returns non-zero when issues found, which is expected behavior
+    console.log('Comment-catcher completed (found issues)');
+  }
 }
 
 // Read the report
 let reportContent;
 try {
-  if (fs.existsSync(reportPath)) {
+  if (cliError) {
+    // Real error occurred
+    reportContent = `❌ **Comment Catcher failed to run**
+
+\`\`\`
+${cliError}
+\`\`\`
+
+Please check the [action logs](${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}) for details.`;
+  } else if (fs.existsSync(reportPath)) {
     reportContent = fs.readFileSync(reportPath, 'utf8');
   } else {
     reportContent = '✅ No outdated comments detected. Great job keeping documentation up to date!';
