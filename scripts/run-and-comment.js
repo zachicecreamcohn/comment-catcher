@@ -27,6 +27,13 @@ try {
   process.exit(1);
 }
 
+// Validate API key is present
+if (!process.env.ANTHROPIC_API_KEY) {
+  console.error('❌ Error: ANTHROPIC_API_KEY environment variable is not set');
+  process.exit(1);
+}
+console.log('✓ ANTHROPIC_API_KEY is set');
+
 // Ensure base branch ref is available
 console.log(`Fetching base branch: ${BASE_BRANCH}...`);
 try {
@@ -46,7 +53,8 @@ try {
     stdio: 'pipe',
     env: {
       ...process.env,
-      ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY
+      ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+      ANTHROPIC_BASE_URL: process.env.ANTHROPIC_BASE_URL
     }
   });
   console.log('Comment-catcher completed successfully');
