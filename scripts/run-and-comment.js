@@ -27,6 +27,15 @@ try {
   process.exit(1);
 }
 
+// Ensure base branch ref is available
+console.log(`Fetching base branch: ${BASE_BRANCH}...`);
+try {
+  execSync(`git fetch origin ${BASE_BRANCH}:${BASE_BRANCH}`, { stdio: 'pipe' });
+  console.log(`Successfully fetched ${BASE_BRANCH}`);
+} catch (fetchError) {
+  console.log(`Note: Could not fetch ${BASE_BRANCH} (may already exist locally)`);
+}
+
 // Run comment-catcher CLI
 console.log('Running comment-catcher...');
 let reportPath;
