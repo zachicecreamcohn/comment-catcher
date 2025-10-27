@@ -39,11 +39,10 @@ runs:
 
     - name: Run comment-catcher and post results
       shell: bash
-      env:
-        GITHUB_TOKEN: ${{ inputs.github-token }}
-        ANTHROPIC_API_KEY: ${{ inputs.anthropic-api-key }}
-        ANTHROPIC_BASE_URL: ${{ inputs.anthropic-base-url }}
-        BASE_BRANCH: ${{ inputs.base-branch }}
-        DEPTH: ${{ inputs.depth }}
       run: |
+        export GITHUB_TOKEN="${{ inputs.github-token }}"
+        export ANTHROPIC_API_KEY="${{ inputs.anthropic-api-key }}"
+        export ANTHROPIC_BASE_URL="${{ inputs.anthropic-base-url }}"
+        export BASE_BRANCH="${{ inputs.base-branch }}"
+        export DEPTH="${{ inputs.depth }}"
         node ${{ github.action_path }}/scripts/run-and-comment.js
