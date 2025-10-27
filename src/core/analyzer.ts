@@ -24,6 +24,12 @@ export async function analyzeComments(
     throw new Error(`${apiKeyEnvVar} environment variable is required`);
   }
 
+  // Debug logging (will be masked in GitHub Actions)
+  console.log(`   API key validation: length=${apiKey.length}, prefix=${apiKey.substring(0, 7)}, suffix=${apiKey.substring(apiKey.length - 4)}`);
+  if (apiKey.includes('\n') || apiKey.includes('\r')) {
+    console.warn('   WARNING: API key contains newline characters');
+  }
+
   if (comments.length === 0) {
     return [];
   }
@@ -87,7 +93,7 @@ async function deduplicateComments(
 
     const lastComment = currentGroup[currentGroup.length - 1];
     const lastEnd = lastComment.comment.endLine || lastComment.comment.line;
-    
+
     // Same file and consecutive or overlapping lines
     if (
       lastComment.comment.file === comment.comment.file &&

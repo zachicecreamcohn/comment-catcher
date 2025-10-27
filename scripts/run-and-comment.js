@@ -32,9 +32,22 @@ if (!process.env.ANTHROPIC_API_KEY) {
   console.error('❌ Error: ANTHROPIC_API_KEY environment variable is not set');
   process.exit(1);
 }
-const keyLength = process.env.ANTHROPIC_API_KEY.length;
-const keyPrefix = process.env.ANTHROPIC_API_KEY.substring(0, 7);
-console.log(`✓ ANTHROPIC_API_KEY is set (length: ${keyLength}, prefix: ${keyPrefix}...)`);
+const apiKey = process.env.ANTHROPIC_API_KEY;
+const keyLength = apiKey.length;
+const keyPrefix = apiKey.substring(0, 7);
+const keySuffix = apiKey.substring(apiKey.length - 4);
+console.log(`✓ ANTHROPIC_API_KEY is set (length: ${keyLength}, prefix: ${keyPrefix}..., suffix: ...${keySuffix})`);
+
+// Check for common issues
+if (apiKey.includes('\n') || apiKey.includes('\r')) {
+  console.warn('⚠️  WARNING: API key contains newline characters');
+}
+if (apiKey.startsWith(' ') || apiKey.endsWith(' ')) {
+  console.warn('⚠️  WARNING: API key has leading or trailing spaces');
+}
+if (!apiKey.startsWith('sk-ant-')) {
+  console.warn('⚠️  WARNING: API key does not start with expected "sk-ant-" prefix');
+}
 
 // Ensure base branch ref is available
 console.log(`Fetching base branch: ${BASE_BRANCH}...`);
