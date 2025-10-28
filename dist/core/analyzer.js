@@ -21,6 +21,8 @@ export async function analyzeComments(comments, diff) {
     // Get base URL from env var, config value, or default
     const baseURLEnvVar = 'ANTHROPIC_BASE_URL';
     const baseURL = process.env[baseURLEnvVar] || config.llmOptions?.baseURL || 'https://api.anthropic.com';
+    console.log(`   Using baseURL: ${baseURL}`);
+    console.log(`   Using model: ${config.llmOptions?.model || 'claude-3-5-sonnet-20241022'}`);
     const anthropic = new Anthropic({
         apiKey,
         baseURL,
