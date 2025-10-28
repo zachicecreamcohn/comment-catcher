@@ -45,4 +45,4 @@ runs:
         export ANTHROPIC_BASE_URL="${{ inputs.anthropic-base-url }}"
         export BASE_BRANCH="${{ inputs.base-branch }}"
         export DEPTH="${{ inputs.depth }}"
-        node ${{ github.action_path }}/scripts/run-and-comment.js
+        node ${{ github.action_path }}/scripts/inline-comment.js

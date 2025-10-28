@@ -16,13 +16,8 @@ export async function analyzeComments(
   diff: string
 ): Promise<OutdatedComment[]> {
   const config = await loadConfig();
-  
-  // Debug log the actual config being used
-  if (config.llmOptions) {
-    console.log(`   Config llmOptions: ${JSON.stringify(config.llmOptions)}`);
-  } else {
-    console.log('   No llmOptions found in config');
-  }
+
+
 
   const apiKeyEnvVar = 'ANTHROPIC_API_KEY';
   const apiKey = process.env[apiKeyEnvVar];
@@ -31,11 +26,7 @@ export async function analyzeComments(
     throw new Error(`${apiKeyEnvVar} environment variable is required`);
   }
 
-  // Debug logging (will be masked in GitHub Actions)
-  console.log(`   API key validation: length=${apiKey.length}, prefix=${apiKey.substring(0, 7)}, suffix=${apiKey.substring(apiKey.length - 4)}`);
-  if (apiKey.includes('\n') || apiKey.includes('\r')) {
-    console.warn('   WARNING: API key contains newline characters');
-  }
+
 
   if (comments.length === 0) {
     return [];
@@ -45,8 +36,7 @@ export async function analyzeComments(
   const baseURLEnvVar = 'ANTHROPIC_BASE_URL';
   const baseURL = process.env[baseURLEnvVar] || config.llmOptions?.baseURL || 'https://api.anthropic.com';
 
-  console.log(`   Using baseURL: ${baseURL}`);
-  console.log(`   Using model: ${config.llmOptions?.model || 'claude-3-5-sonnet-20241022'}`);
+
 
   const anthropic = new Anthropic({
     apiKey,
@@ -238,7 +228,7 @@ async function analyzeCommentBatch(
                   line: { type: 'number', description: 'Line number' },
                   comment_text: { type: 'string', description: 'The comment text' },
                   reason: { type: 'string', description: 'Why this comment is outdated' },
-                  suggestion: { type: 'string', description: 'Optional suggestion for updating the comment' },
+                  suggestion: { type: 'string', description: 'The exact updated comment text (just the comment, not the comment syntax like // or /* */)' },
                 },
                 required: ['file', 'line', 'comment_text', 'reason'],
               },
@@ -324,7 +314,9 @@ For each outdated comment, provide:
 - The file and line number (must match one from "Currently Existing Comments")
 - The comment text
 - A clear reason why it's outdated
-- An optional suggestion for how to update it`;
+- A suggestion for the updated comment text (provide just the comment content, not the // or /* */ syntax)
+
+When providing suggestions, give the exact updated comment text that would replace the old comment.`;
 }
 
 function extractDeletedComments(diff: string): string[] {

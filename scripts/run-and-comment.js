@@ -32,22 +32,6 @@ if (!process.env.ANTHROPIC_API_KEY) {
   console.error('❌ Error: ANTHROPIC_API_KEY environment variable is not set');
   process.exit(1);
 }
-const apiKey = process.env.ANTHROPIC_API_KEY;
-const keyLength = apiKey.length;
-const keyPrefix = apiKey.substring(0, 7);
-const keySuffix = apiKey.substring(apiKey.length - 4);
-console.log(`✓ ANTHROPIC_API_KEY is set (length: ${keyLength}, prefix: ${keyPrefix}..., suffix: ...${keySuffix})`);
-
-// Check for common issues
-if (apiKey.includes('\n') || apiKey.includes('\r')) {
-  console.warn('⚠️  WARNING: API key contains newline characters');
-}
-if (apiKey.startsWith(' ') || apiKey.endsWith(' ')) {
-  console.warn('⚠️  WARNING: API key has leading or trailing spaces');
-}
-if (!apiKey.startsWith('sk-ant-')) {
-  console.warn('⚠️  WARNING: API key does not start with expected "sk-ant-" prefix');
-}
 
 // Ensure base branch ref is available
 console.log(`Fetching base branch: ${BASE_BRANCH}...`);
@@ -60,24 +44,17 @@ try {
 
 // Run comment-catcher CLI
 console.log('Running comment-catcher...');
-console.log(`Environment check - ANTHROPIC_API_KEY present: ${!!process.env.ANTHROPIC_API_KEY}`);
 let reportPath;
 let cliError = null;
 try {
   reportPath = path.join(process.cwd(), 'comment-catcher-report.md');
-  
-  // Build the environment explicitly
-  const cliEnv = {
-    ...process.env,
-    ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
-    ANTHROPIC_BASE_URL: process.env.ANTHROPIC_BASE_URL
-  };
-  
-  console.log(`CLI will receive ANTHROPIC_API_KEY: ${!!cliEnv.ANTHROPIC_API_KEY}`);
-  
   execSync(`comment-catcher check -b ${BASE_BRANCH} -d ${DEPTH} -f markdown -o ${reportPath}`, {
-    stdio: 'inherit', // Changed from 'pipe' to see actual error output
-    env: cliEnv
+    stdio: 'pipe',
+    env: {
+      ...process.env,
+      ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+      ANTHROPIC_BASE_URL: process.env.ANTHROPIC_BASE_URL
+    }
   });
   console.log('Comment-catcher completed successfully');
 } catch (error) {

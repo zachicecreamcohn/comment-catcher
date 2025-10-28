@@ -63,11 +63,8 @@ export async function loadConfig(): Promise<CommentCatcherConfig> {
         const configContent = readFileSync(configPath, 'utf-8');
         const userConfig = JSON.parse(configContent);
         loadedConfig = { ...defaultConfig, ...userConfig };
-        
-        // Debug logging for llmOptions
-        if (userConfig.llmOptions) {
-          console.log(`   Loaded llmOptions from config: ${JSON.stringify(userConfig.llmOptions)}`);
-        }
+
+
       }
       cachedConfig = loadedConfig;
       return loadedConfig;
