@@ -1,6 +1,6 @@
 {
   "name": "comment-catcher",
-  "version": "0.1.14",
+  "version": "0.1.15",
   "description": "CLI tool to detect outdated code comments in PRs",
   "type": "module",
   "main": "dist/index.js",
