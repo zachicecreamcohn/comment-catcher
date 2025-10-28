@@ -197,14 +197,21 @@ async function main() {
   try {
     // Run comment-catcher to generate JSON report
     const reportPath = path.join(process.cwd(), 'comment-catcher-report.json');
-    execSync(`comment-catcher check -b ${BASE_BRANCH} -d ${DEPTH} -f json -o ${reportPath}`, {
-      stdio: 'inherit',
-      env: {
-        ...process.env,
-        ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
-        ANTHROPIC_BASE_URL: process.env.ANTHROPIC_BASE_URL
+    try {
+      execSync(`comment-catcher check -b ${BASE_BRANCH} -d ${DEPTH} -f json -o ${reportPath}`, {
+        stdio: 'inherit',
+        env: {
+          ...process.env,
+          ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+          ANTHROPIC_BASE_URL: process.env.ANTHROPIC_BASE_URL
+        }
+      });
+    } catch (error) {
+      // comment-catcher exits with code 1 when it finds issues, which is expected
+      if (error.status !== 1) {
+        throw error; // Re-throw if it's a real error
       }
-    });
+    }
 
     // Read the JSON report
     let outdatedComments = [];
