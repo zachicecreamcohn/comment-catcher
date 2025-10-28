@@ -5,6 +5,13 @@ import { loadConfig } from './config.js';
  */
 export async function analyzeComments(comments, diff) {
     const config = await loadConfig();
+    // Debug log the actual config being used
+    if (config.llmOptions) {
+        console.log(`   Config llmOptions: ${JSON.stringify(config.llmOptions)}`);
+    }
+    else {
+        console.log('   No llmOptions found in config');
+    }
     const apiKeyEnvVar = 'ANTHROPIC_API_KEY';
     const apiKey = process.env[apiKeyEnvVar];
     if (!apiKey) {

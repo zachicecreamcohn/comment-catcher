@@ -16,6 +16,13 @@ export async function analyzeComments(
   diff: string
 ): Promise<OutdatedComment[]> {
   const config = await loadConfig();
+  
+  // Debug log the actual config being used
+  if (config.llmOptions) {
+    console.log(`   Config llmOptions: ${JSON.stringify(config.llmOptions)}`);
+  } else {
+    console.log('   No llmOptions found in config');
+  }
 
   const apiKeyEnvVar = 'ANTHROPIC_API_KEY';
   const apiKey = process.env[apiKeyEnvVar];
@@ -37,7 +44,7 @@ export async function analyzeComments(
   // Get base URL from env var, config value, or default
   const baseURLEnvVar = 'ANTHROPIC_BASE_URL';
   const baseURL = process.env[baseURLEnvVar] || config.llmOptions?.baseURL || 'https://api.anthropic.com';
-  
+
   console.log(`   Using baseURL: ${baseURL}`);
   console.log(`   Using model: ${config.llmOptions?.model || 'claude-3-5-sonnet-20241022'}`);
 
