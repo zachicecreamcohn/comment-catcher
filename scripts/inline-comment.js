@@ -35,91 +35,88 @@ const apiBaseUrl = process.env.GITHUB_API_URL || 'https://api.github.com';
 // Identifier to track our comments
 const COMMENT_SIGNATURE = '🔍 Outdated Comment Detected';
 
-// Get PR diff to find line positions
-async function getPRDiff() {
-  const response = await fetch(
-    `${apiBaseUrl}/repos/${owner}/${repo}/pulls/${prNumber}`,
-    {
-      headers: {
-        'Authorization': `Bearer ${GITHUB_TOKEN}`,
-        'Accept': 'application/vnd.github.diff',
-        'User-Agent': 'comment-catcher-action'
+// Get PR files to find comment positions
+async function getPRFiles() {
+  const files = [];
+  let page = 1;
+  
+  while (true) {
+    const response = await fetch(
+      `${apiBaseUrl}/repos/${owner}/${repo}/pulls/${prNumber}/files?per_page=100&page=${page}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${GITHUB_TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': 'comment-catcher-action'
+        }
       }
-    }
-  );
+    );
 
-  if (!response.ok) {
-    throw new Error(`Failed to get PR diff: ${response.statusText}`);
+    if (!response.ok) {
+      throw new Error(`Failed to get PR files: ${response.statusText}`);
+    }
+
+    const pageFiles = await response.json();
+    if (pageFiles.length === 0) break;
+    
+    files.push(...pageFiles);
+    page++;
   }
 
-  return response.text();
+  return files;
 }
 
-// Parse diff to find line positions for comments
-function findCommentPositionsInDiff(diff, outdatedComments) {
-  const diffLines = diff.split('\n');
+// Find comment positions using PR files API
+async function findCommentPositions(prFiles, outdatedComments) {
   const positions = [];
   const notInDiff = [];
 
   for (const comment of outdatedComments) {
-    const filePath = comment.comment.file;
-    const commentLine = comment.comment.line;
+    const file = prFiles.find(f => f.filename === comment.comment.file);
+    
+    if (!file || !file.patch) {
+      console.log(`File ${comment.comment.file} not found in PR changes`);
+      notInDiff.push(comment);
+      continue;
+    }
 
-    // Find the file in the diff
-    let inFile = false;
-    let currentFile = '';
-    let position = 0;
-    let currentLineNumber = 0;
+    // Parse the patch to find the line
+    const patchLines = file.patch.split('\n');
+    let currentLine = 0;
     let foundPosition = null;
 
-    for (let i = 0; i < diffLines.length; i++) {
-      const line = diffLines[i];
-
-      // Check if we're starting a new file
-      if (line.startsWith('diff --git')) {
-        const match = line.match(/b\/(.+)$/);
+    for (let i = 0; i < patchLines.length; i++) {
+      const line = patchLines[i];
+      
+      // Parse @@ header to get starting line number
+      if (line.startsWith('@@')) {
+        const match = line.match(/@@ -\d+(?:,\d+)? \+(\d+)/);
         if (match) {
-          currentFile = match[1];
-          inFile = currentFile === filePath;
-          position = 0;
+          currentLine = parseInt(match[1]) - 1;
         }
         continue;
       }
 
-      // Track position within the current file's diff
-      if (inFile) {
-        position++;
-
-        // Parse the @@ line to get line numbers
-        if (line.startsWith('@@')) {
-          const match = line.match(/@@ -\d+(?:,\d+)? \+(\d+)/);
-          if (match) {
-            currentLineNumber = parseInt(match[1]) - 1;
-          }
-          continue;
-        }
-
-        // Track line numbers for additions and unchanged lines
-        if (line.startsWith('+') || line.startsWith(' ')) {
-          currentLineNumber++;
-          
-          // Check if this is the line with our comment
-          if (currentLineNumber === commentLine) {
-            foundPosition = position;
-            break;
-          }
+      // Track line numbers
+      if (line.startsWith('+') || line.startsWith(' ')) {
+        currentLine++;
+        
+        if (currentLine === comment.comment.line) {
+          // GitHub counts position from the start of the file's patch
+          foundPosition = i + 1;
+          break;
         }
       }
     }
 
     if (foundPosition !== null) {
       positions.push({
-        path: filePath,
+        path: file.filename,
         position: foundPosition,
         comment: comment
       });
     } else {
-      console.log(`Could not find position for comment at ${filePath}:${commentLine} in diff`);
+      console.log(`Could not find line ${comment.comment.line} in diff for ${comment.comment.file}`);
       notInDiff.push(comment);
     }
   }
@@ -308,13 +305,13 @@ No outdated comments detected. Great job keeping documentation up to date!
       return;
     }
 
-    // Get the PR diff
-    console.log('Getting PR diff...');
-    const diff = await getPRDiff();
+    // Get PR files with patches
+    console.log('Getting PR files...');
+    const prFiles = await getPRFiles();
 
     // Find positions of comments in the diff
     console.log('Finding comment positions in diff...');
-    const { positions: commentPositions, notInDiff } = findCommentPositionsInDiff(diff, outdatedComments);
+    const { positions: commentPositions, notInDiff } = await findCommentPositions(prFiles, outdatedComments);
 
     // Dismiss previous reviews and create new one
     if (commentPositions.length > 0) {
