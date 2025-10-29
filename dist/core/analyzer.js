@@ -105,9 +105,9 @@ ${suggestions ? `Multiple suggestions given:\n${suggestions}\n` : ''}
 Task:
 1. Identify the top 2 most important and distinct reasons why this comment is outdated
 2. Combine any overlapping reasons into a single clear reason
-3. Provide one consolidated suggestion for how to update the comment
+3. Provide one consolidated suggestion - ONLY the exact replacement comment text (no instructions, no quotes, just the raw comment content)
 
-Return your analysis as a consolidated reason and suggestion.`;
+Return your analysis as a consolidated reason and the exact replacement comment text.`;
     const response = await anthropic.messages.create({
         model: config.llmOptions?.model || 'claude-3-5-sonnet-20241022',
         max_tokens: 1024,
@@ -124,7 +124,7 @@ Return your analysis as a consolidated reason and suggestion.`;
                         },
                         consolidated_suggestion: {
                             type: 'string',
-                            description: 'A single, clear suggestion for updating the comment',
+                            description: 'The exact replacement comment text only - no instructions, quotes, or explanations. Just the raw comment content.',
                         },
                     },
                     required: ['consolidated_reason', 'consolidated_suggestion'],
@@ -167,7 +167,7 @@ async function analyzeCommentBatch(anthropic, comments, diff, config) {
                                     line: { type: 'number', description: 'Line number' },
                                     comment_text: { type: 'string', description: 'The comment text' },
                                     reason: { type: 'string', description: 'Why this comment is outdated' },
-                                    suggestion: { type: 'string', description: 'The exact updated comment text (just the comment, not the comment syntax like // or /* */)' },
+                                    suggestion: { type: 'string', description: 'The exact replacement comment text only - no instructions, quotes, or explanations. Just the raw comment content that should replace the old comment.' },
                                 },
                                 required: ['file', 'line', 'comment_text', 'reason'],
                             },
@@ -245,9 +245,19 @@ For each outdated comment, provide:
 - The file and line number (must match one from "Currently Existing Comments")
 - The comment text
 - A clear reason why it's outdated
-- A suggestion for the updated comment text (provide just the comment content, not the // or /* */ syntax)
+- A suggestion for the updated comment text (provide ONLY the exact replacement comment text - no instructions like "Update to:" or "Change to:", no quotes around the text, just the raw comment content)
 
-When providing suggestions, give the exact updated comment text that would replace the old comment.`;
+When providing suggestions:
+- Give ONLY the exact text that should replace the old comment
+- Do NOT include instructions like "Update the comment to:" or "Add a comment explaining..."
+- Do NOT wrap the suggestion in quotes
+- Do NOT include comment syntax (// or /* */)
+- Just provide the raw comment text that would go after the // or inside /* */
+
+Example:
+BAD: "Update the comment to: 'Process user data with validation'"
+BAD: "Process user data with validation"
+GOOD: Process user data with validation`;
 }
 function extractDeletedComments(diff) {
     const deletedComments = [];

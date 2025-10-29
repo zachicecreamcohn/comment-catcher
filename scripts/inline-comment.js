@@ -179,6 +179,38 @@ async function dismissPreviousReviews() {
   }
 }
 
+// Helper to check if a suggestion is actually instructions
+function isInstructionNotSuggestion(text) {
+  // Check for common instruction patterns
+  const instructionPatterns = [
+    /^(update|change|modify|add|remove|delete|replace)\s+(the\s+)?(comment\s+)?(to|with):/i,
+    /^(you should|please|consider|try to)/i,
+    /^["'].*["']$/, // Wrapped in quotes
+    /:\s*["'].*["']$/, // Ends with : "quoted text"
+  ];
+  
+  return instructionPatterns.some(pattern => pattern.test(text.trim()));
+}
+
+// Clean instruction-style text to extract the actual suggestion
+function extractSuggestionFromInstruction(text) {
+  // Try to extract text after common patterns
+  const patterns = [
+    /(?:update|change|modify|add|replace)\s+(?:the\s+)?(?:comment\s+)?(?:to|with):\s*["']?(.*)["']?$/i,
+    /:\s*["'](.*)["']$/, // Extract quoted text after colon
+    /^["'](.*)["']$/, // Remove surrounding quotes
+  ];
+  
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match && match[1]) {
+      return match[1].trim();
+    }
+  }
+  
+  return text; // Return original if no pattern matches
+}
+
 // Create new review with comments
 async function createReviewWithComments(commentPositions) {
   if (commentPositions.length === 0) {
@@ -192,10 +224,28 @@ async function createReviewWithComments(commentPositions) {
     body += `**Why it's outdated:** ${comment.reason}\n\n`;
     
     if (comment.suggestion) {
-      body += `**Suggested update:**\n`;
-      body += '```suggestion\n';
-      body += comment.suggestion + '\n';
-      body += '```\n';
+      // Check if the suggestion is actually instructions
+      if (isInstructionNotSuggestion(comment.suggestion)) {
+        // Try to extract the actual suggestion
+        const extracted = extractSuggestionFromInstruction(comment.suggestion);
+        
+        if (extracted !== comment.suggestion && !isInstructionNotSuggestion(extracted)) {
+          // We successfully extracted a clean suggestion
+          body += `**Suggested update:**\n`;
+          body += '```suggestion\n';
+          body += extracted + '\n';
+          body += '```\n';
+        } else {
+          // Show as regular text, not a suggestion block
+          body += `**Suggested update:** ${comment.suggestion}\n`;
+        }
+      } else {
+        // It's a clean suggestion, use the suggestion block
+        body += `**Suggested update:**\n`;
+        body += '```suggestion\n';
+        body += comment.suggestion + '\n';
+        body += '```\n';
+      }
     }
 
     return {
@@ -341,10 +391,28 @@ Found ${outdatedComments.length} potentially outdated comment(s).`;
         summaryBody += `**Why it's outdated:** ${comment.reason}\n`;
         
         if (comment.suggestion) {
-          summaryBody += `\n**Suggested update:**\n`;
-          summaryBody += '```\n';
-          summaryBody += comment.suggestion + '\n';
-          summaryBody += '```\n';
+          // Check if the suggestion is actually instructions
+          if (isInstructionNotSuggestion(comment.suggestion)) {
+            // Try to extract the actual suggestion
+            const extracted = extractSuggestionFromInstruction(comment.suggestion);
+            
+            if (extracted !== comment.suggestion && !isInstructionNotSuggestion(extracted)) {
+              // We successfully extracted a clean suggestion
+              summaryBody += `\n**Suggested update:**\n`;
+              summaryBody += '```\n';
+              summaryBody += extracted + '\n';
+              summaryBody += '```\n';
+            } else {
+              // Show as regular text, not a code block
+              summaryBody += `\n**Suggested update:** ${comment.suggestion}\n`;
+            }
+          } else {
+            // It's a clean suggestion, use the code block
+            summaryBody += `\n**Suggested update:**\n`;
+            summaryBody += '```\n';
+            summaryBody += comment.suggestion + '\n';
+            summaryBody += '```\n';
+          }
         }
         
         summaryBody += '\n---\n\n';
